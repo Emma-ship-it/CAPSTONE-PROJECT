@@ -1,16 +1,28 @@
 import random 
 import sqlite3
+from datetime import datetime
+from myclasses import *
+
 conn = sqlite3.connect("Lotusbank.db")
 cursor = conn.cursor()
 
+# now=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# print(type(now))
+
 emmanuel = cursor.execute("""
-  SELECT * FROM customers
-  WHERE username=?              
-                 """,("emma",)).fetchall()   
+  SELECT * FROM transactions
+  WHERE user_id = ?             
+                 """,(1,)).fetchall()   
 print(emmanuel) 
-
-
-
+for i in emmanuel:
+      print(f"transaction:{i[1]}/{i[2]} alert\nDate: {i[3]}\nAmount: ${i[4]}  ")
+stevo=60985374
+# acc=AccountOwner("toby",400)
+# acc.insert_transaction("Alice","emm",40)
+# trans=cursor.execute("""
+#    SELECT * FROM transactions                  
+#                      """).fetchall()
+# print(trans)
 
 
 

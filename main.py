@@ -2,7 +2,8 @@ import re
 import sqlite3
 import hashlib
 import random 
-
+import time
+from datetime import datetime
 from getpass import getpass
 from myclasses import *
 
@@ -13,7 +14,10 @@ from myclasses import *
 # 4. Input validation
 
 conn = sqlite3.connect("Lotusbank.db")
+
 cursor = conn.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
+now=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 def acc_no_generator():
     acc_no_gen=[str(num) for num in range(10)]
     acc_no=""
@@ -21,8 +25,16 @@ def acc_no_generator():
     for i in acc_no_gen[:8]:
         acc_no += i
     return  acc_no  
- 
+
+def trans_id_generator():
+    trans_id_gen=[str(num) for num in range(10)]
+    trans_id=""
+    random.shuffle(trans_id_gen)
+    for i in trans_id_gen:
+        trans_id += i
+    return trans_id
 def main():
+    cursor.execute("PRAGMA foreign_keys = ON")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS customers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +46,24 @@ def main():
         
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS transactions (
+        trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transac TEXT,
+        transaction_type TEXT,
+        date_time_stamp TEXT,
+        Amount INTEGER,
+        user_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES customers(id)
+        
+    )
+    """)
+    
+    
+    
+    
+    
+   
 
     def sign_up():
         Account_number=acc_no_generator()
@@ -133,18 +163,20 @@ def main():
 
         user = cursor.execute("SELECT * FROM customers WHERE username = ? AND password = ?", (username, hashed_password)).fetchone()
         if user is not None:
+            time.sleep(3)
             print("Logged in successfully")
+            time.sleep(2)
             Lotusbank(user)
         else:
             print("Invalid username or password")
-
+            
 
     main_menu = """
     1. Make deposit.
     2. Withdraw.
     3. Transfer.
-    4. Account details
-    5. Log out
+    4. Transaction History.
+    5. Log Out.
     """
 
     
@@ -155,13 +187,19 @@ def main():
         acc= AccountOwner(username,Account_balance)
         print("\n\n**********************Lotusbank plc **********************")
         print(f"Welcome, {username}")
+        time.sleep(3)
+        print(main_menu)
         while True:
-            print(main_menu)
+                        
             choice = input("Choose an option from the menu above: ").strip()
             if choice == "1":
                while True:
                     try:
                         deposit=int(input("Enter amount to be deposited : "))
+                        print("Processing",end='')
+                        for _ in range(5):
+                            time.sleep(2) 
+                            print('.')
                         print(acc.deposit(deposit))
                         
                    
@@ -174,7 +212,9 @@ def main():
                         print(e)
                         continue
                     else:
-                        acc.update_balance()    
+                        
+                        acc.update_balance()
+                        acc.insert_transaction("Deposit","Credit",now,deposit,id)
                     break
             
             elif choice == "2":
@@ -191,7 +231,8 @@ def main():
                             print(e)    
                             continue    
                     else:
-                        acc.update_balance()    
+                        acc.update_balance() 
+                        acc.insert_transaction("Withdrawal","debit",now,amount_withdrawn,id)   
                     break
             
             
@@ -222,7 +263,27 @@ def main():
                         else:
                           acc.update_balance()  
                           rec.update_balance()
+                          acc.insert_transaction("Transfer","debit",now,transferred_amount,id)
                         break  
+            elif choice == "4":
+                acc.chk_transaction_history(id)
+            
+                # trans_history= acc.chk_transaction_history(id)
+                # while i <= len(trans_history):
+                #     if i != len(trans_history):
+                #         tran=trans_history[i]
+                #         time.sleep(3)
+                #         print(f"transaction : {tran[1]}/{tran[2]} alert")
+                #         time.sleep(3)
+                #         print(f"Date: {tran[3]}" )
+                #         continue
+                #     else:
+                #         break
+                    
+            
+        
+            
+                       
 
 
     auth_menu = """
@@ -234,7 +295,7 @@ def main():
 
 
     while True:
-        print("\n\n**********************Auth Menu**********************")
+        print("\n\n*******************Sign up Page*************************")
         print("Welcome to Lotusbank.")
         print(auth_menu)
         choice = input("Choose an option from the menu above to perform transactions: ").strip()

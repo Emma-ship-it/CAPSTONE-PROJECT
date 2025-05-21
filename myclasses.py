@@ -50,13 +50,26 @@ class AccountOwner:
                raise InsuficientFunds(f"Funds unavailable") 
            self._balance-=amount
            return "Transfer successful"
-
-
+       def insert_transaction(self,trans,trans_type,date,amt,user_id):
+           cursor.execute("""
+              INSERT INTO transactions(transac,transaction_type,date_time_stamp,Amount,user_id) VALUES
+              (?,?,?,?,?)         
+          
+               """,(trans,trans_type,date,amt,user_id))
+           conn.commit()
+       def chk_transaction_history(self,user_id):
+           owner=cursor.execute("""
+             SELECT * FROM transactions
+             WHERE user_id = ?             
+                          """,(user_id,)).fetchall()
+           for i in owner:
+               print(f"transaction:{i[1]}/{i[2]} alert\nDate: {i[3]}\nAmount: ${i[4]}  ")
+           
+             
 
 class Recepient(AccountOwner):
     def __init__(self,name,balance):
         super().__init__(name,balance)     
         
-
 
                      
