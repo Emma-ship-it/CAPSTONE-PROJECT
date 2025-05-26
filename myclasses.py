@@ -25,7 +25,7 @@ class AccountOwner:
             return self.format_money(self._balance)
     
        def update_balance(self):
-           print(f"Updating balance of {self.username} to {self._balance}")
+        #    print(f"Updating balance of {self.username} to {self._balance}")
            cursor.execute("""
             UPDATE customers
             SET Account_balance=?
@@ -37,7 +37,7 @@ class AccountOwner:
             if amount <= 0:
                 raise NegativeValues("Amount cannot be less than zero")
             self._balance+=amount
-            print(self._balance)
+            # print(self._balance)
             return "Deposit accepted"
        def withdraw(self,amount):
             if amount > self._balance:
@@ -62,8 +62,7 @@ class AccountOwner:
              SELECT * FROM transactions
              WHERE user_id = ?             
                           """,(user_id,)).fetchall()
-           for i in owner:
-               print(f"transaction:{i[1]}/{i[2]} alert\nDate: {i[3]}\nAmount: ${i[4]}  ")
+           return owner
            
              
 

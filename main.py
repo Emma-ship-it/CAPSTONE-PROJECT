@@ -167,8 +167,9 @@ def main():
             print("Logged in successfully")
             time.sleep(2)
             Lotusbank(user)
-        else:
-            print("Invalid username or password")
+        else:    
+           time.sleep(1)
+           print("Invalid username or password")
             
 
     main_menu = """
@@ -176,7 +177,7 @@ def main():
     2. Withdraw.
     3. Transfer.
     4. Transaction History.
-    5. Log Out.
+    5. Exit.
     """
 
     
@@ -188,10 +189,14 @@ def main():
         print("\n\n**********************Lotusbank plc **********************")
         print(f"Welcome, {username}")
         time.sleep(3)
-        print(main_menu)
+        
         while True:
-                        
+            
+            print(main_menu)   
+                     
             choice = input("Choose an option from the menu above: ").strip()
+            if choice == "5":
+                break
             if choice == "1":
                while True:
                     try:
@@ -199,8 +204,8 @@ def main():
                         print("Processing",end='')
                         for _ in range(5):
                             time.sleep(2) 
-                            print('.')
-                        print(acc.deposit(deposit))
+                            print('.',end="",flush=True)
+                        print(f"\n{acc.deposit(deposit)}\n")
                         
                    
                     except ValueError as e:
@@ -211,6 +216,8 @@ def main():
                     except InsuficientFunds as e:
                         print(e)
                         continue
+                    except Exception as e:
+                        print(f"Something went wrong : {e}")
                     else:
                         
                         acc.update_balance()
@@ -221,7 +228,12 @@ def main():
                 while True:
                     try:
                         amount_withdrawn=int(input("Enter amount to be deposited : "))
-                        print(acc.withdraw(amount_withdrawn))
+                        print("Processing",end='')
+                        for _ in range(5):
+                            time.sleep(2) 
+                            print('.',end='',flush=True)
+                        
+                        print(f"\n{acc.withdraw(amount_withdrawn)}")
                         
                    
                     except ValueError as e:
@@ -229,7 +241,9 @@ def main():
                             continue    
                     except NegativeValues as e:
                             print(e)    
-                            continue    
+                            continue
+                    except Exception as e:
+                        print(f"Something went wrong : {e}")        
                     else:
                         acc.update_balance() 
                         acc.insert_transaction("Withdrawal","debit",now,amount_withdrawn,id)   
@@ -260,32 +274,25 @@ def main():
                         except InsuficientFunds as e:
                             print(e)
                             continue
-                        else:
+                        except Exception as e:
+                            print(f"Something went wrong : {e}")
+                        else: 
                           acc.update_balance()  
                           rec.update_balance()
                           acc.insert_transaction("Transfer","debit",now,transferred_amount,id)
                         break  
             elif choice == "4":
-                acc.chk_transaction_history(id)
+                trans_history=acc.chk_transaction_history(id)
+                print("Processing",end='')
+                for _ in range(3):
+                    time.sleep(2) 
+                    print('.',end="",flush=True)
+                for i in trans_history:
+                    time.sleep(2)
+                    print(f"transaction :{i[1]}/{i[2]}alert\nDate:{i[3]}\nAmount :${i[4]}\n")
             
-                # trans_history= acc.chk_transaction_history(id)
-                # while i <= len(trans_history):
-                #     if i != len(trans_history):
-                #         tran=trans_history[i]
-                #         time.sleep(3)
-                #         print(f"transaction : {tran[1]}/{tran[2]} alert")
-                #         time.sleep(3)
-                #         print(f"Date: {tran[3]}" )
-                #         continue
-                #     else:
-                #         break
-                    
-            
-        
-            
-                       
-
-
+                
+    
     auth_menu = """
     1. Sign Up.
     2. Log In.
@@ -305,7 +312,7 @@ def main():
         elif choice == "2":
             log_in()
         elif choice == "3":
-            print("Hope to see you soon 👋.")
+            print("Bye!...It's nice banking with you 👋.")
             break
         else:
             print("Invalid choice.")
