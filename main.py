@@ -54,6 +54,7 @@ def main():
         date_time_stamp TEXT,
         Amount INTEGER,
         user_id INTEGER,
+        recepient TEXT,
         FOREIGN KEY (user_id) REFERENCES customers(id)
         
     )
@@ -69,7 +70,12 @@ def main():
         Account_number=acc_no_generator()
         while True:
             full_name = input("Enter your full name: ").strip()
+            pattern=pattern = r"^[A-Za-z]+(?:\s+[A-Za-z]+)+$"
+            match=re.match(pattern,full_name)
             chk_length= len(full_name) >=4 and len(full_name) <= 255
+            if not match:
+                print("A complete name(first and last name) required")
+                continue
             if not full_name:
                 print("First name cannot be blank")
                 continue
@@ -98,7 +104,7 @@ def main():
                 continue
             break
 
-
+       
 
         while True:
             password = getpass("Enter your password: ").strip()
@@ -124,7 +130,18 @@ def main():
                 print("Passwords don't match")
                 continue
             break
-
+        while True:
+             try:
+                 initial_deposit=int(input("Make an initial deposit to activate your account : "))
+             except ValueError as e:
+                 print(f"Something went wrong : {e}") 
+                 continue
+             except Exception as e:
+                 print(f"Something went wrong : {e}") 
+                 continue
+             else:
+                 print("Deposit accepted") 
+             break         
 
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
@@ -132,9 +149,9 @@ def main():
 
         try:
             cursor.execute("""
-                INSERT INTO customers (username, full_name, password, Acc_no) VALUES 
-                (?, ?, ?, ?)
-            """, ( username, full_name, hashed_password,Account_number))
+                INSERT INTO customers (username, full_name, password, Acc_no,Account_balance) VALUES 
+                (?, ?, ?, ?, ?)
+            """, ( username, full_name, hashed_password,Account_number,initial_deposit))
         except sqlite3.IntegrityError as e:
             print(f"User with that username already exists: {e}")
         else:
@@ -177,7 +194,9 @@ def main():
     2. Withdraw.
     3. Transfer.
     4. Transaction History.
-    5. Exit.
+    5. Account details.
+    6. Check Balance.
+    7. Exit.
     """
 
     
@@ -195,7 +214,7 @@ def main():
             print(main_menu)   
                      
             choice = input("Choose an option from the menu above: ").strip()
-            if choice == "5":
+            if choice == "7":
                 break
             if choice == "1":
                while True:
@@ -205,7 +224,7 @@ def main():
                         for _ in range(5):
                             time.sleep(2) 
                             print('.',end="",flush=True)
-                        print(f"\n{acc.deposit(deposit)}\n")
+                        acc.deposit(deposit)
                         
                    
                     except ValueError as e:
@@ -219,7 +238,7 @@ def main():
                     except Exception as e:
                         print(f"Something went wrong : {e}")
                     else:
-                        
+                        print("\nDeposit Accepted")
                         acc.update_balance()
                         acc.insert_transaction("Deposit","Credit",now,deposit,id)
                     break
@@ -227,10 +246,10 @@ def main():
             elif choice == "2":
                 while True:
                     try:
-                        amount_withdrawn=int(input("Enter amount to be deposited : "))
+                        amount_withdrawn=int(input("Enter amount to withdraw : "))
                         print("Processing",end='')
                         for _ in range(5):
-                            time.sleep(2) 
+                            time.sleep(1) 
                             print('.',end='',flush=True)
                         
                         print(f"\n{acc.withdraw(amount_withdrawn)}")
@@ -253,21 +272,20 @@ def main():
             elif choice == "3":
                 recepient= input("Enter receipient account number : ")
                 recepient_details=cursor.execute("""
-                SELECT username,Acc_no,Account_balance
+                SELECT id,username,full_name,Acc_no,Account_balance
                 FROM customers
                 WHERE Acc_no = ? 
                                                  """,(recepient,)).fetchone()
                 if recepient_details is not None:
-                    print(recepient_details)
-                    username,Ac_no,Acc_bal=recepient_details
-                    print(f"{username} : {Ac_no}")
+                    user_id,username,fl_nm,Ac_no,Acc_bal=recepient_details
+                    print(f"Receipient Name : {fl_nm}\nRecepient Account-Number : {Ac_no} ")
                     rec=Recepient(username,Acc_bal)
-                    print(rec.username)
+                    
                     while True: 
                         try:
-                            transferred_amount=int(input("Enter the amount you want to transfer : "))
+                            transferred_amount=int(input(f"Enter the amount you want to transfer to {fl_nm} : "))
                             print(acc.transfer(transferred_amount))
-                            print(rec.deposit(transferred_amount))
+                            rec.deposit(transferred_amount)
                         except ValueError as e:
                             print(e)  
                             continue  
@@ -276,20 +294,39 @@ def main():
                             continue
                         except Exception as e:
                             print(f"Something went wrong : {e}")
-                        else: 
+                        else:
+                          
                           acc.update_balance()  
                           rec.update_balance()
-                          acc.insert_transaction("Transfer","debit",now,transferred_amount,id)
+                          acc.insert_transaction("Transfer-out","DEBIT",now,transferred_amount,id,rec.username)
+                          rec.insert_transaction("Transfer-in","CREDIT",now,transferred_amount,user_id,acc.username)
                         break  
             elif choice == "4":
                 trans_history=acc.chk_transaction_history(id)
-                print("Processing",end='')
-                for _ in range(3):
-                    time.sleep(2) 
-                    print('.',end="",flush=True)
-                for i in trans_history:
-                    time.sleep(2)
-                    print(f"transaction :{i[1]}/{i[2]}alert\nDate:{i[3]}\nAmount :${i[4]}\n")
+                if not trans_history:
+                    print("No transactions yet")
+                else:        
+                   
+                    print("Processing",end='')
+                    for _ in range(3):
+                        time.sleep(1) 
+                        print('.',end="",flush=True)
+                    for _,trans,trans_type,date,amt,_,rept in trans_history:
+                        time.sleep(2)
+                        print(f"\nTransaction : {trans}/{trans_type} transaction")
+                        print(f"Date : {date}")
+                        print(f"Amount : ${amt}")
+                        if rept:
+                            trans_dir= "FROM" if trans =="Transfer-in" else "TO"
+                            print(f"{trans_dir} : {rept}")     
+                        # print(f"\n\nTransaction :{i[1]}/{i[2]} transaction\nDate:{i[3]}\nAmount :${i[4]}\n")   
+                    
+            
+            
+            elif choice == "5":
+                print(f"Account name: {full_name}\nAccount Number : {Acc_no} ")  
+            elif choice == "6":
+                print(f"Your balance : ${acc._balance}")               
             
                 
     
@@ -331,12 +368,4 @@ except Exception as e:
 finally:
     conn.close()
     
- 
-
-        
-  
-     
-        
-         
-        
-        
+      

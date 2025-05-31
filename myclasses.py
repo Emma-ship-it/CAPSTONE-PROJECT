@@ -18,11 +18,7 @@ class AccountOwner:
        def __init__(self,username,balance):
            self.username=username
            self._balance=balance
-       def format_money(self,amount):
-            return f"${amount:,.2f}"
-       @property
-       def balance(self):
-            return self.format_money(self._balance)
+
     
        def update_balance(self):
         #    print(f"Updating balance of {self.username} to {self._balance}")
@@ -38,7 +34,7 @@ class AccountOwner:
                 raise NegativeValues("Amount cannot be less than zero")
             self._balance+=amount
             # print(self._balance)
-            return "Deposit accepted"
+        
        def withdraw(self,amount):
             if amount > self._balance:
                 raise InsuficientFunds(f"Insufficient funds")
@@ -50,18 +46,19 @@ class AccountOwner:
                raise InsuficientFunds(f"Funds unavailable") 
            self._balance-=amount
            return "Transfer successful"
-       def insert_transaction(self,trans,trans_type,date,amt,user_id):
+       def insert_transaction(self,trans,trans_type,date,amt,user_id,rept=None):
            cursor.execute("""
-              INSERT INTO transactions(transac,transaction_type,date_time_stamp,Amount,user_id) VALUES
-              (?,?,?,?,?)         
+              INSERT INTO transactions(transac,transaction_type,date_time_stamp,Amount,user_id,recepient) VALUES
+              (?,?,?,?,?,?)         
           
-               """,(trans,trans_type,date,amt,user_id))
+               """,(trans,trans_type,date,amt,user_id,rept))
            conn.commit()
        def chk_transaction_history(self,user_id):
            owner=cursor.execute("""
              SELECT * FROM transactions
              WHERE user_id = ?             
                           """,(user_id,)).fetchall()
+        
            return owner
            
              
