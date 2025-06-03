@@ -109,13 +109,15 @@ def main():
         while True:
             password = getpass("Enter your password: ").strip()
             chk_password_length= len(password) >= 3 and len(password)<=20 
-            pattern=r"[A-Za-z0-9 %$#_@?]"
-            match=re.match(pattern,password)
+            has_upper = re.search(r'[A-Z]', password)
+            has_lower = re.search(r'[a-z]', password)
+            has_special = re.search(r'[!@#$%^&*.?"<>_%$#]', password)
+        
             if not password:
                 print("Password cannot be blank")
                 continue
-            if not match:
-                print("Passowrd must contain at least one uppercase,lowercase and special character")
+            if not (has_upper and has_lower and has_special ):
+                print("Password must have at least one Uppercase,lowercase and special characters")
                 continue
             if not chk_password_length:
                 print("Password must be at 3 to 20 characters")
@@ -157,6 +159,7 @@ def main():
         else:
             conn.commit()
             print("Account created successfully.")
+            print(f"\nYour account number is : {Account_number}")
             log_in()
 
 
@@ -221,22 +224,22 @@ def main():
                     try:
                         deposit=int(input("Enter amount to be deposited : "))
                         print("Processing",end='')
-                        for _ in range(5):
-                            time.sleep(2) 
+                        for _ in range(4):
+                            time.sleep(1) 
                             print('.',end="",flush=True)
                         acc.deposit(deposit)
                         
                    
                     except ValueError as e:
-                            print(e) 
+                            print(f"\n{e}")
                             continue    
 
 
                     except InsuficientFunds as e:
-                        print(e)
+                        print(f"\n{e}")
                         continue
                     except Exception as e:
-                        print(f"Something went wrong : {e}")
+                        print(f"\nSomething went wrong : {e}")
                     else:
                         print("\nDeposit Accepted")
                         acc.update_balance()
@@ -248,7 +251,7 @@ def main():
                     try:
                         amount_withdrawn=int(input("Enter amount to withdraw : "))
                         print("Processing",end='')
-                        for _ in range(5):
+                        for _ in range(4):
                             time.sleep(1) 
                             print('.',end='',flush=True)
                         
@@ -256,13 +259,13 @@ def main():
                         
                    
                     except ValueError as e:
-                            print(e) 
+                            print(f"\n{e}") 
                             continue    
                     except NegativeValues as e:
-                            print(e)    
+                            print(f"\n{e}")    
                             continue
                     except Exception as e:
-                        print(f"Something went wrong : {e}")        
+                        print(f"\nSomething went wrong : {e}")        
                     else:
                         acc.update_balance() 
                         acc.insert_transaction("Withdrawal","debit",now,amount_withdrawn,id)   
@@ -278,22 +281,27 @@ def main():
                                                  """,(recepient,)).fetchone()
                 if recepient_details is not None:
                     user_id,username,fl_nm,Ac_no,Acc_bal=recepient_details
-                    print(f"Receipient Name : {fl_nm}\nRecepient Account-Number : {Ac_no} ")
+                    print(f"\n\nReceipient Name : {fl_nm}\nRecepient Account-Number : {Ac_no} ")
                     rec=Recepient(username,Acc_bal)
                     
                     while True: 
                         try:
                             transferred_amount=int(input(f"Enter the amount you want to transfer to {fl_nm} : "))
+                            print("Processing",end='')
+                            for _ in range(5):
+                                 time.sleep(2) 
+                                 print('.',end="",flush=True)
+                            print('\n')     
                             print(acc.transfer(transferred_amount))
                             rec.deposit(transferred_amount)
                         except ValueError as e:
-                            print(e)  
+                            print(f"\n{e}")  
                             continue  
                         except InsuficientFunds as e:
-                            print(e)
+                            print(f"\n{e}")
                             continue
                         except Exception as e:
-                            print(f"Something went wrong : {e}")
+                            print(f"\nSomething went wrong : {e}")
                         else:
                           
                           acc.update_balance()  
@@ -308,7 +316,7 @@ def main():
                 else:        
                    
                     print("Processing",end='')
-                    for _ in range(3):
+                    for _ in range(4):
                         time.sleep(1) 
                         print('.',end="",flush=True)
                     for _,trans,trans_type,date,amt,_,rept in trans_history:
